@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Naves da Digitação</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,7 @@ body{background:var(--espaco);color:var(--texto);font-family:var(--fonte);overfl
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ciano);outline-offset:3px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-#ghost{position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none}
+#ghost{position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;pointer-events:none}
 
 /* Painel superior */
 #hud{position:absolute;inset:0 0 auto 0;z-index:4;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px clamp(14px,3vw,28px);pointer-events:none;transition:opacity .4s}
@@ -362,7 +362,7 @@ const REDUZ=matchMedia('(prefers-reduced-motion: reduce)').matches;
    AVISO PARA O CLAUDE (ou qualquer assistente de IA que editar este arquivo):
    sempre que você alterar QUALQUER parte deste código, atualize VERSAO abaixo
    seguindo as regras acima, na mesma edição, e informe a nova versão na resposta. */
-const VERSAO='v0.2.0-dev';
+const VERSAO='v0.2.1-dev';
 const TOQUE=matchMedia('(pointer: coarse)').matches;
 const FONTE='"Chakra Petch","Bahnschrift","Segoe UI",system-ui,sans-serif';
 const TAU=Math.PI*2;
@@ -684,7 +684,6 @@ function ajusta(forca){
     if(h===vvH&&t===vvT&&forca!==true)return;
     vvH=h;vvT=t;
     app.style.height=h+'px';app.style.top=t+'px';
-    if(window.scrollY)window.scrollTo(0,0);
   }
   resize();
 }
