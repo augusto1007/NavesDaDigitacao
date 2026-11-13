@@ -99,6 +99,20 @@ h2{margin:0 0 8px;font-size:clamp(30px,6vw,46px);font-weight:700;line-height:1.0
 .chave[aria-checked="true"] .trilho::after{transform:translateX(18px);background:var(--ciano);box-shadow:0 0 8px var(--ciano)}
 .chave .estado{min-width:2.2em;text-align:left;font-variant-numeric:tabular-nums;color:var(--suave);font-size:13px}
 @media (prefers-reduced-motion:reduce){.chave .trilho,.chave .trilho::after{transition:none}}
+.modo{margin:0 0 12px}
+.dif[hidden],.novo[hidden],.faixa:empty,.faixa-leg:empty{display:none}
+.diario{margin:0 auto 22px;max-width:30rem;padding:14px 18px;border:1px solid rgba(255,179,71,.45);border-radius:14px;background:rgba(255,179,71,.07)}
+.diario h3{margin:0 0 4px;font-size:18px;color:var(--ambar)}
+.diario p{margin:0;font-size:14px;line-height:1.45;color:#b7d6d1}
+.diario .dia-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px;color:var(--texto);font-variant-numeric:tabular-nums}
+.diario .dia-stats b{color:var(--ambar)}
+.diario .prox{margin-top:8px;font-size:13px;color:var(--suave)}
+.faixa{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;margin:0 auto 18px;max-width:22rem}
+.faixa i{width:16px;height:16px;border-radius:4px}
+.faixa .g{background:#46f3df;box-shadow:0 0 6px rgba(70,243,223,.6)}
+.faixa .y{background:#ffb347;box-shadow:0 0 6px rgba(255,179,71,.5)}
+.faixa .r{background:#ff4d5e;box-shadow:0 0 6px rgba(255,77,94,.6)}
+.faixa-leg{margin:-10px 0 18px;font-size:12px;color:var(--suave)}
 .desc-dif{margin:10px 0 26px;font-size:14px;color:var(--suave);min-height:1.4em}
 .iniciar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px}
 .prompt{display:inline-flex;align-items:center;gap:10px;font-size:15px;color:var(--suave)}
@@ -195,7 +209,17 @@ dialog.janela::backdrop{background:rgba(2,9,12,.74);backdrop-filter:blur(4px);-w
     <div class="cartao">
       <h1 id="titulo" aria-label="Naves da Digitação"></h1>
       <p class="lead">Cada nave inimiga carrega uma palavra. Digite-a para travar a mira e disparar antes que ela cruze sua linha de defesa.</p>
-      <div class="dif" role="radiogroup" aria-label="Dificuldade">
+      <div class="dif modo" role="radiogroup" aria-label="Modo de jogo">
+        <button role="radio" data-m="livre">Partida livre</button>
+        <button role="radio" data-m="diario">Desafio do dia</button>
+      </div>
+      <div class="diario" id="painelDiario" hidden>
+        <h3 id="diaTitulo"></h3>
+        <p>As mesmas ondas, naves e palavras para todo mundo hoje, sempre no nível Médio. Jogue quantas vezes quiser: vale a sua melhor pontuação.</p>
+        <div class="dia-stats" id="diaStats"></div>
+        <p class="prox" id="diaProx"></p>
+      </div>
+      <div class="dif" id="grupoDif" role="radiogroup" aria-label="Dificuldade">
         <button role="radio" data-d="cadete">Fácil</button>
         <button role="radio" data-d="piloto">Médio</button>
         <button role="radio" data-d="as">Difícil</button>
@@ -234,6 +258,8 @@ dialog.janela::backdrop{background:rgba(2,9,12,.74);backdrop-filter:blur(4px);-w
       <h2>Missão encerrada</h2>
       <p class="sub" id="subFim"></p>
       <div class="stats" id="stats"></div>
+      <div class="faixa" id="faixaFim" aria-hidden="true"></div>
+      <p class="faixa-leg" id="faixaLeg"></p>
       <div class="iniciar">
         <div class="prompt" aria-hidden="true">Digite <span class="pw"></span></div>
         <span class="ou">ou</span>
@@ -315,6 +341,15 @@ dialog.janela::backdrop{background:rgba(2,9,12,.74);backdrop-filter:blur(4px);-w
         </ul>
       </section>
       <section>
+        <h3>Desafio do dia</h3>
+        <ul>
+          <li>Todo dia à meia-noite (horário de Brasília) sai um desafio novo. Todo mundo enfrenta as mesmas ondas, na mesma ordem, com as mesmas naves e palavras, sempre no nível Médio.</li>
+          <li>Você pode jogar quantas vezes quiser no dia. Fica guardada a sua melhor pontuação e quantas tentativas você fez.</li>
+          <li>Jogar em dias seguidos aumenta a sua <strong>sequência de dias</strong>. Pular um dia zera a sequência.</li>
+          <li>No fim, cada onda vira um quadradinho: ciano se você passou sem dano, âmbar se passou levando dano e vermelho na onda em que caiu. Eles aparecem na imagem e no texto compartilhados, para comparar com os amigos sem revelar as palavras.</li>
+        </ul>
+      </section>
+      <section>
         <h3>Naves inimigas</h3>
         <dl class="naves">
           <div><canvas data-nave="batedor" aria-hidden="true"></canvas><dt>Batedor</dt><dd>Rápido, com palavras curtas.</dd></div>
@@ -363,7 +398,7 @@ const REDUZ=matchMedia('(prefers-reduced-motion: reduce)').matches;
    AVISO PARA O CLAUDE (ou qualquer assistente de IA que editar este arquivo):
    sempre que você alterar QUALQUER parte deste código, atualize VERSAO abaixo
    seguindo as regras acima, na mesma edição, e informe a nova versão na resposta. */
-const VERSAO='v0.3.1-dev';
+const VERSAO='v0.4.0-dev';
 const TOQUE=matchMedia('(pointer: coarse)').matches;
 const FONTE='"Chakra Petch","Bahnschrift","Segoe UI",system-ui,sans-serif';
 const TAU=Math.PI*2;
@@ -372,6 +407,17 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const lerp=(a,b,t)=>a+(b-a)*t;
 const pick=a=>a[Math.random()*a.length|0];
+/* ---------- Sorteio com semente (Desafio do dia) ----------
+   rng é o sorteio que afeta a jogabilidade (palavras, tipos, posições, velocidades).
+   Na partida livre é Math.random. No desafio do dia, cada onda recebe duas sequências com semente:
+   rngFila (composição da onda e as naves que saem da fila, sempre na mesma ordem) e
+   rngExtra (o que nasce durante a onda: drones, fragmentos, mísseis, próximas palavras da nave-mãe).
+   Efeitos visuais (faíscas, estrelas, fumaça) continuam usando rand/pick comuns. */
+function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashTexto(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+let rngFila=Math.random,rngExtra=Math.random,rng=Math.random;
+const rj=(a,b)=>a+rng()*(b-a);
+const pj=a=>a[rng()*a.length|0];
 const LETRA=/^[\p{L}-]$/u;
 const fmt=n=>Math.round(n).toLocaleString('pt-BR');
 
@@ -721,6 +767,45 @@ const PALAVRA_INICIO='jogar';
 // Cole aqui o link do jogo quando ele estiver no ar, por exemplo 'https://meusite.com/naves'.
 // Ele aparece na imagem e no texto compartilhado.
 const LINK_JOGO='';
+// Se LINK_JOGO estiver vazio, usa o endereço onde o jogo está aberto (ex.: o GitHub Pages).
+const LINK_BASE=LINK_JOGO||(/^https?:$/.test(location.protocol)?location.origin+location.pathname.replace(/index\.html$/,''):'');
+const linkJogo=d=>LINK_BASE?LINK_BASE+(d?'#diario':''):'';
+const INSTA='@augustto1007';
+
+/* ---------- Desafio do dia ---------- */
+// Dia 1 do desafio. Muda o número mostrado (#1, #2…), não a semente.
+const LANCAMENTO='2026-11-13';
+let modo='livre',difSalvo=null,DIA=null,ondasRes=[];
+const ehDiario=()=>modo==='diario';
+function diaHoje(){
+  let k;
+  try{k=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
+  catch(e){const d=new Date();k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+  const[a,m,d]=k.split('-');
+  return{chave:k,num:Math.round((Date.parse(k)-Date.parse(LANCAMENTO))/864e5)+1,curto:`${d}/${m}`,longo:`${d}/${m}/${a}`};
+}
+const diaAnterior=k=>new Date(Date.parse(k)-864e5).toISOString().slice(0,10);
+function leDiario(){
+  let o=null;try{o=JSON.parse(localStorage.getItem('ndd-diario'))}catch(e){}
+  if(!o||typeof o!=='object')o={};
+  o.hist=o.hist&&typeof o.hist==='object'?o.hist:{};
+  o.seq=o.seq&&typeof o.seq==='object'?o.seq:{ultimo:'',atual:0,max:0};
+  return o;
+}
+function gravaDiario(o){
+  const ks=Object.keys(o.hist).sort();while(ks.length>60)delete o.hist[ks.shift()];
+  try{localStorage.setItem('ndd-diario',JSON.stringify(o))}catch(e){}
+}
+// Sequência válida hoje: se o último dia jogado não foi hoje nem ontem, ela já está zerada.
+function seqAtual(o,k){const u=o.seq.ultimo;return u===k||u===diaAnterior(k)?o.seq.atual:0}
+function tempoAteAmanha(){
+  // Meia-noite de Brasília (UTC-3, sem horário de verão desde 2019).
+  const agora=Date.now(),br=agora-3*36e5,prox=Math.floor(br/864e5+1)*864e5+3*36e5;
+  const min=Math.max(0,Math.round((prox-agora)/6e4)),h=Math.floor(min/60),m=min%60;
+  return h?`${h}h ${String(m).padStart(2,'0')}min`:`${m}min`;
+}
+const QUAD={g:'🟦',y:'🟨',r:'🟥'};
+const faixaEmoji=res=>res.map(c=>QUAD[c]).join('');
 
 const mult=()=>1+Math.min(7,Math.floor(seq/12));
 function local(o,lx,ly){const s=Math.sin(o.rot),c=Math.cos(o.rot);return[o.x+lx*c-ly*s,o.y+lx*s+ly*c]}
@@ -756,7 +841,7 @@ function escolhe(a,b,lista,x,y){
   const niveis=[faixa(lista,a,b),faixa(lista,Math.max(2,a-1),b+2),faixa(TODAS,Math.max(2,a-1),b+3)];
   for(const pool of niveis){
     const livres=pool.filter(w=>!perto.has(nf(w)[0]));
-    if(livres.length)return pick(livres);
+    if(livres.length)return pj(livres);
   }
   const pool=niveis.find(p=>p.length)||lista;
   let melhor=-1,cand=[];
@@ -764,7 +849,7 @@ function escolhe(a,b,lista,x,y){
     const d=perto.get(nf(w)[0])??Infinity;
     if(d>melhor+1){melhor=d;cand=[w]}else if(d>=melhor-1)cand.push(w);
   }
-  return pick(cand.length?cand:pool);
+  return pj(cand.length?cand:pool);
 }
 const tamFonte=e=>Math.round((e.tipo==='chefe'?22:e.tipo==='drone'||e.tipo==='missil'||e.tipo==='fragmento'?15:18)*(W<480?.9:1));
 function medeMargem(e){ctx.font=`600 ${tamFonte(e)}px ${FONTE}`;e.lw=ctx.measureText(e.word).width;e.m=Math.max(e.T.r+6,e.lw/2+18)}
@@ -772,45 +857,46 @@ function nasce(tipo,x,y){
   const T=TIPOS[tipo],base=Math.min(150,22+onda*6.5)*DIFS[dif].vel,[a,b]=T.tam();
   const word=escolhe(a,b,T.lista||PALAVRAS,y>0?x:null,y);
   const e={tipo,T,word,nw:chave(word),typed:0,pend:0,x,bx:x,y,vx:0,kv:0,rot:0,vivo:true,condenado:false,travado:false,
-    conta:!T.extra,flash:0,rastroT:0,amp:0,fq:rand(.8,2),fs:rand(0,TAU),vel:base*T.vel*rand(.9,1.12),
+    conta:!T.extra,flash:0,rastroT:0,amp:0,fq:rj(.8,2),fs:rj(0,TAU),vel:base*T.vel*rj(.9,1.12),
     dano:0,fumT:0,marcas:Array.from({length:tipo==='chefe'?6:3},()=>({x:rand(-.55,.55)*T.r,y:rand(-.45,.3)*T.r,f:rand(0,TAU)}))};
   if(tipo==='missil')e.vel=Math.max(base*T.vel,75);
   if(T.rocha){e.giro=rand(.4,1.4)*(Math.random()<.5?-1:1)*(REDUZ?.3:1);e.rot=rand(0,TAU);e.vxm=0;if(SPR.var[tipo])e.spr=pick(SPR.var[tipo])}
-  if(tipo==='batedor'||tipo==='cruzador'||tipo==='divisor')e.amp=Math.random()<.25?0:rand(20,60);
-  if(tipo==='pesado')e.amp=rand(0,22);
+  if(tipo==='batedor'||tipo==='cruzador'||tipo==='divisor'){const u=rj(0,1),v=rj(20,60);e.amp=u<.25?0:v}
+  if(tipo==='pesado')e.amp=rj(0,22);
   if(tipo==='chefe'){e.nPal=3+Math.floor(onda/5);e.wi=0;e.fogoT=3;e.vel=Math.max(6,(jog.y-170)/(e.nPal*5.5+22))*DIFS[dif].vel}
   medeMargem(e);inimigos.push(e);return e;
 }
-function nasceDaFila(tipo){
+function nasceDaFila(tipo){const ant=rng;rng=rngFila;try{nasceDaFila0(tipo)}finally{rng=ant}}
+function nasceDaFila0(tipo){
   if(tipo==='chefe'){nasce('chefe',W/2,-70);return}
   if(tipo==='grupo'){
     // Três ou quatro meteoros juntos, cruzando a tela na mesma direção.
-    const n=Math.random()<.5?3:4,dir=Math.random()<.5?1:-1,x0=dir>0?rand(W*.08,W*.4):rand(W*.6,W*.92),sp=rand(.45,.8);
+    const n=rng()<.5?3:4,dir=rng()<.5?1:-1,u=rng(),x0=dir>0?W*(.08+u*.32):W*(.6+u*.32),sp=rj(.45,.8);
     total+=n;hud();
     for(let i=0;i<n;i++){
-      const e=nasce('meteoro',0,-40-i*80);e.x=e.bx=clamp(x0-dir*i*rand(60,90),e.m,Math.max(e.m,W-e.m));
+      const e=nasce('meteoro',0,-40-i*80);e.x=e.bx=clamp(x0-dir*i*rj(60,90),e.m,Math.max(e.m,W-e.m));
       e.vel=e.vel*.92;e.vxm=dir*sp*e.vel;
     }
     return;
   }
   if(TIPOS[tipo].rocha){
-    const e=nasce(tipo,0,-40);e.x=e.bx=W>2*e.m?rand(e.m,W-e.m):W/2;
-    e.vxm=(e.x<W/2?1:-1)*rand(.35,.85)*e.vel;return;
+    const e=nasce(tipo,0,-40),u=rng();e.x=e.bx=W>2*e.m?e.m+u*(W-2*e.m):W/2;
+    e.vxm=(e.x<W/2?1:-1)*rj(.35,.85)*e.vel;return;
   }
-  const e=nasce(tipo,0,-30);e.x=e.bx=W>2*e.m?rand(e.m,W-e.m):W/2;
+  const e=nasce(tipo,0,-30),u=rng();e.x=e.bx=W>2*e.m?e.m+u*(W-2*e.m):W/2;
 }
 const ehCinturao=n=>n>5&&n%5===1;
 function montaCinturao(){
   const n=Math.min(4+Math.floor(onda/2),14),q=[];
-  for(let i=0;i<n;i++){const r=Math.random();q.push(r<.25?'grupo':r<.45?'meteoroG':'meteoro')}
-  if(Math.random()<.7)q.splice(2+(Math.random()*(q.length-2)|0),0,'cristal');
+  for(let i=0;i<n;i++){const r=rng();q.push(r<.25?'grupo':r<.45?'meteoroG':'meteoro')}
+  const c1=rng(),c2=rng();if(c1<.7)q.splice(2+(c2*(q.length-2)|0),0,'cristal');
   return q;
 }
 const pesoFila=k=>k==='grupo'?3.5:TIPOS[k].extra?0:1;
 function montaFila(){
   const n=Math.min(5+onda*2,32),q=[];
   for(let i=0;i<n;i++){
-    const r=Math.random();let k='batedor';
+    const r=rng();let k='batedor';
     if(onda>=2&&r<.38)k='cruzador';
     if(onda>=3&&r<.16)k='pesado';
     if(onda>=4&&r>.84)k='divisor';
@@ -819,7 +905,7 @@ function montaFila(){
   return q;
 }
 /* Com naves mais lentas em tela baixa, o intervalo entre elas cresce um pouco para não lotar a tela. */
-const intervalo=()=>(Math.max(.45,2-onda*.12)*DIFS[dif].ritmo+rand(0,.5))/Math.sqrt(fatorTela());
+const intervalo=()=>(Math.max(.45,2-onda*.12)*DIFS[dif].ritmo+rngFila()*.5)/Math.sqrt(fatorTela());
 function moveInimigo(e,dt){
   const px=e.x;
   if(e.tipo==='chefe'){
@@ -829,9 +915,9 @@ function moveInimigo(e,dt){
     e.x+=(tx-e.x)*(1-Math.exp(-1.2*dt));
     e.fogoT-=dt;
     if(e.fogoT<=0&&e.y>50&&estado==='jogando'){
-      e.fogoT=Math.max(1.8,4.4-onda*.08)*DIFS[dif].ritmo+rand(0,1.2);
+      e.fogoT=Math.max(1.8,4.4-onda*.08)*DIFS[dif].ritmo+rj(0,1.2);
       if(inimigos.filter(i=>i.vivo&&i.tipo==='missil').length<4){
-        const s=Math.random()<.5?-1:1,[mx,my]=local(e,s*37,24),m=nasce('missil',mx,my);
+        const s=rng()<.5?-1:1,[mx,my]=local(e,s*37,24),m=nasce('missil',mx,my);
         m.kv=-30;part({k:'clarao',x:mx,y:my,r:26,t:0,vida:.18,c:'#ff4d5e'});SFX.missil();
       }
     }
@@ -918,8 +1004,8 @@ function mata(e,porEmp=false){
     for(const s of[-1,1]){const d=nasce('drone',e.x+s*12,e.y);d.bx=clamp(e.x+s*44,d.m,W-d.m);d.kv=-110}
   }
   if(e.tipo==='meteoroG'&&!porEmp){
-    const n=Math.random()<.5?2:3;
-    for(let i=0;i<n;i++){const d=nasce('fragmento',e.x+rand(-12,12),e.y+rand(-6,6));d.vxm=e.vxm+(i-(n-1)/2)*rand(70,110);d.kv=-100}
+    const n=rng()<.5?2:3;
+    for(let i=0;i<n;i++){const d=nasce('fragmento',e.x+rj(-12,12),e.y+rj(-6,6));d.vxm=e.vxm+(i-(n-1)/2)*rj(70,110);d.kv=-100}
   }
   if(e.tipo==='cristal'&&!porEmp){
     const ganhou=emp<3;emp=Math.min(3,emp+1);SFX.cristal();
@@ -959,6 +1045,7 @@ function sofre(){
   if(vidas<=0)morre();
 }
 function morre(){
+  ondasRes.push('r');
   estado='morrendo';app.dataset.estado='morrendo';morteT=2;jog.vivo=false;lentoT=1.3;soltaAlvo();
   explode(jog.x,jog.y,'#46f3df',2.4);explode(jog.x,jog.y,'#ffb347',1.4);SFX.boom(2.5);trauma=1;
 }
@@ -1036,16 +1123,22 @@ function legenda(chefe){
 }
 function novaOnda(){
   onda++;const chefe=onda%5===0,cint=ehCinturao(onda);cinturao=cint;
+  if(ehDiario()&&DIA){
+    const sem=hashTexto(`ndd|${DIA.chave}|onda${onda}`);
+    rngFila=mulberry32(sem);rngExtra=mulberry32(sem^0x9E3779B9);
+  }else{rngFila=rngExtra=Math.random}
+  rng=rngFila;
   fila=chefe?['chefe']:cint?montaCinturao():montaFila();
+  rng=rngExtra;
   total=Math.round(fila.reduce((t,k)=>t+(k==='grupo'?0:pesoFila(k)),0));feitas=0;semDano=true;
   nascerT=chefe?2.6:2;
   const sub=cint?`Onda ${onda}: rochas grandes se partem, cristais dão pulso`:legenda(chefe);
-  banner={t:0,dur:2.6,titulo:cint?'Cinturão de meteoros':`Onda ${onda}`,sub,chefe,cor:cint?'#ffb347':null};
+  banner={t:0,dur:2.6,titulo:cint?'Cinturão de meteoros':`Onda ${onda}`,sub:ehDiario()&&onda===1?`Desafio do dia #${DIA.num} · ${sub}`:sub,chefe,cor:cint?'#ffb347':null};
   chefe?SFX.alarme():cint?SFX.cinturao():SFX.onda();
   anuncia(`Onda ${onda}. ${sub}.`);hud();
 }
 function ondaLimpa(){
-  limpando=true;
+  limpando=true;ondasRes.push(semDano?'g':'y');
   if(semDano){
     const g=250*onda;pontos+=g;
     flutua(W/2,H*.42,`Onda sem danos +${fmt(g)}`,'#46f3df',18);SFX.bonus();
@@ -1094,11 +1187,29 @@ function promptTecla(ch){
   if(promptI>=PALAVRA_INICIO.length){promptI=0;setTimeout(iniciar,160)}
 }
 function difUI(){
+  for(const b of document.querySelectorAll('[data-m]')){const on=b.dataset.m===modo;b.setAttribute('aria-checked',on);b.tabIndex=on?0:-1}
   for(const b of document.querySelectorAll('[data-d]')){const on=b.dataset.d===dif;b.setAttribute('aria-checked',on);b.tabIndex=on?0:-1}
+  const d=ehDiario();
+  $('grupoDif').hidden=d;$('descDif').hidden=d;$('painelDiario').hidden=!d;
+  $('bIniciar').textContent=d?'Começar desafio':'Começar missão';
+  if(d){diarioUI();return}
   $('descDif').textContent=DIFS[dif].desc;
   const r=recorde(dif);
   $('recMenu').textContent=r?`Recorde no nível ${DIFS[dif].nome}: ${fmt(r)} pontos`:`Nenhum recorde no nível ${DIFS[dif].nome} ainda`;
 }
+function diarioUI(){
+  const hoje=diaHoje(),o=leDiario(),h=o.hist[hoje.chave],sq=seqAtual(o,hoje.chave);
+  $('diaTitulo').textContent=`Desafio #${hoje.num} · ${hoje.longo}`;
+  const st=$('diaStats');st.textContent='';
+  const item=(rot,val)=>{const sp=document.createElement('span');const b=document.createElement('b');b.textContent=val;sp.append(rot+' ',b);st.append(sp)};
+  if(h){item('Melhor hoje:',`${fmt(h.melhor)} pts`);item('Tentativas:',h.tent)}
+  else item('Ainda não jogado hoje','');
+  if(sq)item('Sequência:',sq===1?'1 dia':`${sq} dias`);
+  if(o.seq.max>1)item('Recorde de sequência:',`${o.seq.max} dias`);
+  $('diaProx').textContent=`Próximo desafio em ${tempoAteAmanha()}`;
+  $('recMenu').textContent='';
+}
+setInterval(()=>{if(estado==='menu'&&ehDiario())diarioUI()},30000);
 function opcoesUI(){
   for(const[id,k]of[['oAcentos','acentos'],['oVibra','vibra']]){
     const b=$(id);b.setAttribute('aria-checked',cfg[k]);b.querySelector('.estado').textContent=cfg[k]?'On':'Off';
@@ -1131,11 +1242,18 @@ function mostra(id){for(const t of document.querySelectorAll('.tela'))t.hidden=t
 /* ---------- Imagem para compartilhar ---------- */
 let resultado=null;
 function textoCompartilhar(r){
-  let t=`Fiz ${fmt(r.pontos)} pontos no Naves da Digitação (nível ${r.nivel}), cheguei à onda ${r.onda} digitando ${r.ppm} palavras por minuto. Consegue me superar?`;
-  if(LINK_JOGO)t+=`\n${LINK_JOGO}`;
-  return t;
+  const lk=linkJogo(r.diario);let t;
+  if(r.diario){
+    t=`Naves da Digitação · Desafio #${r.dia.num} (${r.dia.curto})\n${faixaEmoji(r.res)}\n`+
+      `${fmt(r.pontos)} pontos · onda ${r.onda} · ${r.ppm} ppm · ${r.prec}% de precisão`+
+      (r.sq>1?`\n🔥 ${r.sq} dias seguidos`:'')+`\nEncara o mesmo desafio hoje?`;
+  }else{
+    t=`Fiz ${fmt(r.pontos)} pontos no Naves da Digitação (nível ${r.nivel}), cheguei à onda ${r.onda} digitando ${r.ppm} palavras por minuto.\n${faixaEmoji(r.res)}\nConsegue me superar?`;
+  }
+  if(lk)t+=`\n${lk}`;
+  return t+`\n${INSTA} no Instagram`;
 }
-const nomeArquivo=()=>`naves-da-digitacao-${resultado.pontos}.jpg`;
+const nomeArquivo=()=>resultado.diario?`naves-desafio-${resultado.dia.num}-${resultado.pontos}.jpg`:`naves-da-digitacao-${resultado.pontos}.jpg`;
 async function geraCartao(r){
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
   const CW=1080,CH=1350,c=document.createElement('canvas');c.width=CW;c.height=CH;
@@ -1165,7 +1283,7 @@ async function geraCartao(r){
     else g.drawImage(SPR.chamaF,-6,17,12,34);
     g.globalCompositeOperation='source-over';g.drawImage(sp.c,-sp.w/2,-sp.h/2,sp.w,sp.h);g.restore();
   };
-  const jx=540,jy=1000,ex=930,ey=430,rot=Math.atan2(ex-jx,-(ey-jy));
+  const jx=540,jy=1040,ex=930,ey=430,rot=Math.atan2(ex-jx,-(ey-jy));
   g.globalCompositeOperation='lighter';g.lineCap='round';
   const nx=jx+Math.sin(rot)*54,ny=jy-Math.cos(rot)*54;
   g.strokeStyle='rgba(70,243,223,.3)';g.lineWidth=14;g.beginPath();g.moveTo(nx,ny);g.lineTo(ex,ey);g.stroke();
@@ -1182,11 +1300,14 @@ async function geraCartao(r){
   g.textAlign='center';g.textBaseline='middle';
   const brilho=(cor,b)=>{g.shadowColor=cor;g.shadowBlur=b};
   g.font=`700 76px ${FONTE}`;g.fillStyle='#e6fffb';brilho('rgba(70,243,223,.8)',30);g.fillText('Naves da Digitação',CW/2,150);
-  g.shadowBlur=0;g.font=`500 32px ${FONTE}`;g.fillStyle='#8db5b0';g.fillText(`Nível ${r.nivel}`,CW/2,222);
-  if(r.novo){
-    g.font=`600 30px ${FONTE}`;const tw=g.measureText('Novo recorde').width+56;
+  g.shadowBlur=0;
+  if(r.diario){g.font=`600 34px ${FONTE}`;g.fillStyle='#ffb347';g.fillText(`Desafio do dia #${r.dia.num} · ${r.dia.longo}`,CW/2,222)}
+  else{g.font=`500 32px ${FONTE}`;g.fillStyle='#8db5b0';g.fillText(`Nível ${r.nivel}`,CW/2,222)}
+  const selo=r.diario?(r.novo?'Melhor do dia':r.sq>1?`${r.sq} dias seguidos`:''):r.novo?'Novo recorde':'';
+  if(selo){
+    g.font=`600 30px ${FONTE}`;const tw=g.measureText(selo).width+56;
     pillEm(g,CW/2-tw/2,272,tw,56,28);g.fillStyle='rgba(255,179,71,.16)';g.fill();g.strokeStyle='rgba(255,179,71,.65)';g.lineWidth=2;g.stroke();
-    g.fillStyle='#ffb347';g.fillText('Novo recorde',CW/2,301);
+    g.fillStyle='#ffb347';g.fillText(selo,CW/2,301);
   }
   let fs=190;const txt=fmt(r.pontos);g.font=`700 ${fs}px ${FONTE}`;
   while(g.measureText(txt).width>640&&fs>90){fs-=10;g.font=`700 ${fs}px ${FONTE}`}
@@ -1205,14 +1326,37 @@ async function geraCartao(r){
     g.font=`500 25px ${FONTE}`;g.fillStyle='#8db5b0';g.fillText(l,cx,cy+38);
   });
 
-  // Rodapé
-  g.font=`600 38px ${FONTE}`;g.fillStyle='#e6fffb';brilho('rgba(0,0,0,.8)',12);
-  g.fillText('Consegue me superar?',CW/2,LINK_JOGO?1225:1260);
-  if(LINK_JOGO){
-    let lf=32;const lk=LINK_JOGO.replace(/^https?:\/\//,'').replace(/\/$/,'');g.font=`600 ${lf}px ${FONTE}`;
-    while(g.measureText(lk).width>960&&lf>18){lf-=2;g.font=`600 ${lf}px ${FONTE}`}
-    g.fillStyle='#46f3df';g.fillText(lk,CW/2,1282);
+  // Faixa de ondas: um quadradinho por onda (ciano sem dano, âmbar com dano, vermelho onde caiu)
+  if(r.res&&r.res.length){
+    const COR={g:'#46f3df',y:'#ffb347',r:'#ff4d5e'},max=20,vis=r.res.slice(0,max),q=30,esp=10;
+    const extra=r.res.length-vis.length,larg=vis.length*(q+esp)-esp+(extra?90:0);
+    let x=CW/2-larg/2;const y=948;
+    for(const c of vis){
+      pillEm(g,x,y-q/2,q,q,7);g.fillStyle=COR[c];brilho(COR[c],14);g.fill();x+=q+esp;
+    }
+    g.shadowBlur=0;
+    if(extra){g.font=`600 28px ${FONTE}`;g.fillStyle='#8db5b0';g.textAlign='left';g.fillText(`+${extra}`,x+4,y+2);g.textAlign='center'}
   }
+
+  // Rodapé: chamada, link e Instagram
+  const lk=linkJogo(r.diario).replace(/^https?:\/\//,'').replace(/\/$/,'');
+  g.font=`600 38px ${FONTE}`;g.fillStyle='#e6fffb';brilho('rgba(0,0,0,.8)',12);
+  g.fillText(r.diario?'Encara o mesmo desafio hoje?':'Consegue me superar?',CW/2,lk?1180:1210);
+  if(lk){
+    let lf=32;g.font=`600 ${lf}px ${FONTE}`;
+    while(g.measureText(lk).width>960&&lf>18){lf-=2;g.font=`600 ${lf}px ${FONTE}`}
+    g.fillStyle='#46f3df';g.fillText(lk,CW/2,1234);
+  }
+  // Selo do Instagram
+  g.shadowBlur=0;
+  g.font=`600 30px ${FONTE}`;const it='Instagram',wIt=g.measureText(it+'  ').width;
+  g.font=`700 30px ${FONTE}`;const wIh=g.measureText(INSTA).width,pw=wIt+wIh+56,py=1268;
+  pillEm(g,CW/2-pw/2,py,pw,56,28);g.fillStyle='rgba(3,14,18,.85)';g.fill();
+  g.strokeStyle='rgba(110,240,225,.35)';g.lineWidth=2;g.stroke();
+  g.textAlign='left';const ix=CW/2-pw/2+28;
+  g.font=`600 30px ${FONTE}`;g.fillStyle='#8db5b0';g.fillText(it,ix,py+29);
+  g.font=`700 30px ${FONTE}`;g.fillStyle='#e6fffb';g.fillText(INSTA,ix+wIt,py+29);
+  g.textAlign='center';
   g.shadowBlur=0;
   return new Promise(res=>c.toBlob(res,'image/jpeg',.92));
 }
@@ -1249,6 +1393,9 @@ async function acaoCartao(compartilhar,btn){
 /* ---------- Fluxo ---------- */
 function iniciar(){
   audio();SFX.inicio();
+  if(ehDiario()){if(difSalvo==null)difSalvo=dif;dif='piloto';DIA=diaHoje()}
+  else{if(difSalvo!=null){dif=difSalvo;difSalvo=null}DIA=null}
+  ondasRes=[];
   inimigos=[];tiros=[];P.length=0;textos=[];timers=[];fila=[];
   onda=0;cinturao=false;pontos=0;pontosVis=0;vidas=3;emp=1;seq=0;maxSeq=0;acertos=0;erros=0;abatidas=0;tempoJogo=0;
   alvo=null;limpando=false;jog.vivo=true;banner=null;lentoT=0;escala=1;trauma=0;flashVerm=0;
@@ -1274,20 +1421,45 @@ function fimDeJogo(){
   estado='fim';app.dataset.estado='fim';ghost.blur();
   const prec=acertos+erros?Math.round(100*acertos/(acertos+erros)):0;
   const ppm=tempoJogo>5?Math.round(acertos/5/(tempoJogo/60)):0;
-  const rec=recorde(dif),novo=pontos>rec&&pontos>0;
-  if(novo)salvaRec(dif,pontos);
+  const diario=ehDiario()&&DIA;
+  let rec=0,novo=false,tent=1,sq=0,primeiroDoDia=false;
+  if(diario){
+    const o=leDiario(),k=DIA.chave,h=o.hist[k]||{melhor:0,tent:0,res:''};
+    primeiroDoDia=!h.tent;rec=h.melhor;novo=pontos>rec&&pontos>0;
+    h.tent++;tent=h.tent;if(novo||!h.res){h.melhor=Math.max(h.melhor,pontos);h.res=ondasRes.join('')}
+    o.hist[k]=h;
+    if(o.seq.ultimo!==k){o.seq.atual=o.seq.ultimo===diaAnterior(k)?o.seq.atual+1:1;o.seq.ultimo=k;o.seq.max=Math.max(o.seq.max||0,o.seq.atual)}
+    sq=o.seq.atual;gravaDiario(o);
+  }else{
+    rec=recorde(dif);novo=pontos>rec&&pontos>0;
+    if(novo)salvaRec(dif,pontos);
+  }
   const mm=Math.floor(tempoJogo/60),ss=String(Math.floor(tempoJogo%60)).padStart(2,'0');
   const itens=[['Onda alcançada',onda],['Palavras por minuto',ppm],['Precisão',prec+'%'],['Maior sequência',maxSeq],['Naves abatidas',abatidas],['Tempo de voo',`${mm}:${ss}`]];
   const st=$('stats');st.textContent='';
   const add=(rot,val,cls)=>{const d=document.createElement('div');if(cls)d.className=cls;const s=document.createElement('strong');s.textContent=val;const l=document.createElement('span');l.textContent=rot;d.append(s,l);st.append(d)};
   add('Pontos',fmt(pontos),'destaque');itens.forEach(([r,v])=>add(r,v));
-  const nr=$('novoRec');nr.hidden=!novo;nr.textContent=`Novo recorde no nível ${DIFS[dif].nome}`;
-  $('subFim').textContent=novo?(rec?`Você superou a marca anterior de ${fmt(rec)} pontos.`:'Primeira marca registrada neste nível.'):rec?`Recorde no nível ${DIFS[dif].nome}: ${fmt(Math.max(rec,pontos))} pontos.`:'';
-  resultado={pontos,onda,ppm,prec,maxSeq,abatidas,tempo:`${mm}:${ss}`,nivel:DIFS[dif].nome,novo};
-  mostra('tFim');$('bDeNovo').focus({preventScroll:true});
+  const nr=$('novoRec');
+  if(diario){
+    nr.hidden=!(novo&&!primeiroDoDia);nr.textContent='Seu melhor resultado do dia';
+    const seqTxt=sq>1?` Sequência de ${sq} dias.`:'';
+    $('subFim').textContent=`Desafio #${DIA.num} · ${DIA.longo} · tentativa ${tent}.`+
+      (primeiroDoDia?' Primeira marca de hoje.':novo?` Antes: ${fmt(rec)} pontos.`:` Seu melhor hoje: ${fmt(rec)} pontos.`)+seqTxt;
+  }else{
+    nr.hidden=!novo;nr.textContent=`Novo recorde no nível ${DIFS[dif].nome}`;
+    $('subFim').textContent=novo?(rec?`Você superou a marca anterior de ${fmt(rec)} pontos.`:'Primeira marca registrada neste nível.'):rec?`Recorde no nível ${DIFS[dif].nome}: ${fmt(Math.max(rec,pontos))} pontos.`:'';
+  }
+  const fx=$('faixaFim');fx.textContent='';
+  for(const c of ondasRes){const i=document.createElement('i');i.className=c;fx.append(i)}
+  const ng=ondasRes.filter(c=>c==='g').length;
+  $('faixaLeg').textContent=ondasRes.length?`${ng} de ${ondasRes.length} ${ondasRes.length===1?'onda':'ondas'} sem dano`:'';
+  resultado={pontos,onda,ppm,prec,maxSeq,abatidas,tempo:`${mm}:${ss}`,nivel:DIFS[dif].nome,
+    novo:novo&&!(diario&&primeiroDoDia),diario:!!diario,dia:DIA,tent,sq,res:ondasRes.slice()};
+  mostra('tFim');$('bDeNovo').textContent=diario?'Tentar de novo':'Jogar de novo';$('bDeNovo').focus({preventScroll:true});
   anuncia(`Missão encerrada com ${fmt(pontos)} pontos na onda ${onda}.`);
 }
 function voltaMenu(){
+  if(difSalvo!=null){dif=difSalvo;difSalvo=null}
   estado='menu';app.dataset.estado='menu';
   inimigos=[];tiros=[];textos=[];timers=[];fila=[];alvo=null;jog.vivo=true;cinturao=false;banner=null;lentoT=0;
   mostra('tMenu');difUI();animaTitulo();promptI=0;promptUI();$('bIniciar').focus({preventScroll:true});
@@ -1630,6 +1802,20 @@ if(PODE_VIBRAR)$('oVibra').hidden=false;
 for(const[id,k,ls]of[['oAcentos','acentos','ndd-acentos'],['oVibra','vibra','ndd-vibra']]){
   $(id).onclick=()=>{cfg[k]=!cfg[k];try{localStorage.setItem(ls,cfg[k]?'1':'0')}catch(e){}opcoesUI();audio();SFX.trava();if(k==='vibra')vibra(40)};
 }
+const grupoM=document.querySelectorAll('[data-m]');
+grupoM.forEach((b,i)=>{
+  b.onclick=()=>{modo=b.dataset.m;try{localStorage.setItem('ndd-modo',modo)}catch(e){}
+    try{history.replaceState(null,'',modo==='diario'?'#diario':location.pathname+location.search)}catch(e){}
+    difUI()};
+  b.onkeydown=e=>{
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;e.preventDefault();
+    const n=grupoM[(i+(e.key==='ArrowRight'?1:-1)+grupoM.length)%grupoM.length];n.click();n.focus();
+  };
+});
+// Link com #diario abre direto no desafio do dia; senão, lembra o último modo usado.
+try{modo=location.hash==='#diario'?'diario':localStorage.getItem('ndd-modo')==='diario'?'diario':'livre'}catch(e){}
+window.addEventListener('hashchange',()=>{if(estado==='menu'&&location.hash==='#diario'){modo='diario';difUI()}});
+$('marcaInsta').textContent=INSTA;
 const grupo=document.querySelectorAll('[data-d]');
 grupo.forEach((b,i)=>{
   b.onclick=()=>{dif=b.dataset.d;try{localStorage.setItem('ndd-dif',dif)}catch(e){}difUI()};
