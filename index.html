@@ -363,7 +363,7 @@ const REDUZ=matchMedia('(prefers-reduced-motion: reduce)').matches;
    AVISO PARA O CLAUDE (ou qualquer assistente de IA que editar este arquivo):
    sempre que você alterar QUALQUER parte deste código, atualize VERSAO abaixo
    seguindo as regras acima, na mesma edição, e informe a nova versão na resposta. */
-const VERSAO='v0.3.0-dev';
+const VERSAO='v0.3.1-dev';
 const TOQUE=matchMedia('(pointer: coarse)').matches;
 const FONTE='"Chakra Petch","Bahnschrift","Segoe UI",system-ui,sans-serif';
 const TAU=Math.PI*2;
@@ -592,7 +592,7 @@ let W=0,H=0,DPR=1;
 const neb=document.createElement('canvas');
 let estrelas=[];
 const baseY=()=>H-(H<520?96:118);
-/* Fim do placar (HUD) em px, medido no resize: nenhum rótulo de palavra é desenhado acima disso. */
+/* Fim do placar (HUD) em px, medido no resize: usado para calcular o percurso útil das naves. */
 let topoHUD=70;
 function medeHUD(){
   const a=app.getBoundingClientRect();let b=0;
@@ -1467,7 +1467,7 @@ function desenhaRotulo(e){
   const fs=tamFonte(e),ehAlvo=e===alvo;
   ctx.font=`600 ${fs}px ${FONTE}`;
   const w=ctx.measureText(e.word).width,h=fs+12,px=10;
-  const x=e.x,y=Math.max(e.y+e.T.r*(e.tipo==='chefe'?.8:1)+8+h/2,topoHUD+h/2);
+  const x=e.x,y=e.y+e.T.r*(e.tipo==='chefe'?.8:1)+8+h/2;
   const p=clamp(1-(jog.y-26-e.y)/220,0,1);
   ctx.globalAlpha=e.condenado||e.travado?.5:1;
   pill(x-w/2-px,y-h/2,w+px*2,h,h/2);
