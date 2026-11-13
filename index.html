@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Naves da Digitação</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--espaco)}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--espaco);color:var(--texto);font-family:var(--fonte);overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-#app{position:relative;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none}
+#app{position:fixed;left:0;right:0;top:0;height:100%;height:100dvh;overflow:hidden;user-select:none;-webkit-user-select:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 #app::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
   background:repeating-linear-gradient(to bottom,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55))}
@@ -49,7 +49,7 @@ button{font:inherit;color:inherit}
 @media (max-width:560px){.onda{top:66px}}
 
 /* Base: combo, digitação, pulso */
-#base{position:absolute;left:0;right:0;bottom:14px;z-index:4;display:flex;justify-content:center;align-items:center;gap:12px;pointer-events:none;transition:opacity .4s;padding:0 12px}
+#base{position:absolute;left:0;right:0;bottom:24px;z-index:4;display:flex;justify-content:center;align-items:center;gap:12px;pointer-events:none;transition:opacity .4s;padding:0 12px}
 #combo{--p:0;width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;position:relative;font-weight:700;font-size:15px;
   background:conic-gradient(var(--ambar) calc(var(--p)*1turn),rgba(255,255,255,.1) 0)}
 #combo::before{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--painel)}
@@ -159,11 +159,16 @@ dialog.janela::backdrop{background:rgba(2,9,12,.74);backdrop-filter:blur(4px);-w
 @media (pointer:coarse){.prompt,.ou,.controles{display:none}.toque,.ct-toque{display:block}}
 @media (max-width:420px){.dif button{padding:8px 12px}.stats strong{font-size:22px}}
 @media (prefers-reduced-motion:reduce){.cursor{animation:none}#combo.sobe,#buffer.erro{animation:none}.prog i{transition:none}}
+.marca{position:absolute;bottom:5px;z-index:11;font-size:11px;line-height:1;letter-spacing:.03em;color:var(--texto);opacity:.4;pointer-events:none;white-space:nowrap;text-shadow:0 0 6px rgba(0,0,0,.8)}
+#marcaInsta{left:clamp(10px,2vw,18px)}
+#marcaVersao{right:clamp(10px,2vw,18px);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
 <div id="app" data-estado="menu">
   <canvas id="cv" aria-hidden="true"></canvas>
+  <span class="marca" id="marcaInsta">@augustto1007</span>
+  <span class="marca" id="marcaVersao"></span>
 
   <header id="hud">
     <div class="pontos"><small>Pontos</small><strong id="hPontos">0</strong></div>
@@ -347,6 +352,17 @@ dialog.janela::backdrop{background:rgba(2,9,12,.74);backdrop-filter:blur(4px);-w
 const $=id=>document.getElementById(id);
 const app=$('app'),cv=$('cv'),ctx=cv.getContext('2d'),ghost=$('ghost');
 const REDUZ=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ATENÇÃO: atualize VERSAO sempre que mexer no código!
+   Formato: vMAIOR.MENOR.CORREÇÃO-dev
+   - CORREÇÃO (+1): conserto de bug ou ajuste pequeno (ex.: v0.1.0 -> v0.1.1)
+   - MENOR (+1, zera CORREÇÃO): recurso novo (ex.: v0.1.1 -> v0.2.0)
+   - MAIOR (+1, zera o resto): mudança grande, ou ao sair do desenvolvimento (ex.: v1.0.0, sem o -dev)
+   O valor aparece no canto inferior direito da tela.
+
+   AVISO PARA O CLAUDE (ou qualquer assistente de IA que editar este arquivo):
+   sempre que você alterar QUALQUER parte deste código, atualize VERSAO abaixo
+   seguindo as regras acima, na mesma edição, e informe a nova versão na resposta. */
+const VERSAO='v0.2.0-dev';
 const TOQUE=matchMedia('(pointer: coarse)').matches;
 const FONTE='"Chakra Petch","Bahnschrift","Segoe UI",system-ui,sans-serif';
 const TAU=Math.PI*2;
@@ -659,10 +675,24 @@ function resize(){
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
   criaNebulosa();criaEstrelas();criaPoeira();cadentes=[];jog.y=baseY();
 }
-function ajusta(){
+let vvH=-1,vvT=-1;
+function ajusta(forca){
   const vv=window.visualViewport;
-  if(vv&&TOQUE)app.style.height=vv.height+'px';
+  if(vv&&TOQUE){
+    const h=Math.round(vv.height),t=Math.round(vv.offsetTop);
+    if(h<80)return; /* leitura transitória durante a animação do teclado */
+    if(h===vvH&&t===vvT&&forca!==true)return;
+    vvH=h;vvT=t;
+    app.style.height=h+'px';app.style.top=t+'px';
+    if(window.scrollY)window.scrollTo(0,0);
+  }
   resize();
+}
+/* Alguns navegadores Android não disparam o último resize ao terminar de abrir/fechar o teclado:
+   confere o visualViewport a cada quadro e reajusta só quando muda. */
+function confereViewport(){
+  const vv=window.visualViewport;
+  if(vv&&TOQUE&&(Math.round(vv.height)!==vvH||Math.round(vv.offsetTop)!==vvT))ajusta();
 }
 
 /* ---------- Estado do jogo ---------- */
@@ -1505,6 +1535,7 @@ function desenha(){
   }
 }
 function frame(now){
+  confereViewport();
   const rdt=Math.min(.05,Math.max(0,(now-ultimo)/1000));ultimo=now;
   if(estado!=='pausado'){
     lentoT=Math.max(0,lentoT-rdt);
@@ -1590,11 +1621,13 @@ grupo.forEach((b,i)=>{
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pausar()});
 window.addEventListener('blur',pausar);
-window.addEventListener('resize',ajusta);
-if(window.visualViewport)visualViewport.addEventListener('resize',ajusta);
+window.addEventListener('resize',()=>ajusta());
+if(window.visualViewport){visualViewport.addEventListener('resize',()=>ajusta());visualViewport.addEventListener('scroll',()=>ajusta())}
+window.addEventListener('orientationchange',()=>setTimeout(()=>ajusta(true),300));
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>inimigos.forEach(medeMargem));
 
-criaSprites();iconesNaves();ajusta();somUI();opcoesUI();difUI();promptUI();bufferUI();comboUI();hud();animaTitulo();
+document.getElementById('marcaVersao').textContent=VERSAO;
+criaSprites();iconesNaves();ajusta(true);somUI();opcoesUI();difUI();promptUI();bufferUI();comboUI();hud();animaTitulo();
 abre($('dControles'));
 requestAnimationFrame(t=>{ultimo=t;frame(t)});
 })();
